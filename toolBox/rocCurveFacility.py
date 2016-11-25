@@ -68,6 +68,34 @@ def drawROCfromEffVsCutCurves(sigGraph, bkgGraph):
     #return ROOT.TGraphAsymmErrors(nPoints, np.array(sigEff), np.array(bkgEff), np.array(sigEffErrXLow), np.array(sigEffErrXUp), np.array(bkgEffErrYLow), np.array(bkgEffErrYUp))
     return ROOT.TGraphAsymmErrors(nPoints, np.array(bkgEff), np.array(sigEff), np.array(bkgEffErrYLow), np.array(bkgEffErrYUp), np.array(sigEffErrXLow), np.array(sigEffErrXUp))
 
+def drawEffVsCutCurve_sigLeft(myTH1, total = 0):
+    """ Create and return eff. vs. cut TGraph, from a one-dimensional histogram.
+    The efficiencies are computed relative to the histogram's integral,
+    or relative to 'total' if it is given. """
+
+    discrV = [ myTH1.GetBinLowEdge(myTH1.GetNbinsX() + 1) ]
+    effV = [1.]
+    integral = myTH1.Integral(0, myTH1.GetNbinsX()) #Remove overflow content, already computed to be 100% efficiency above
+    totintegral = myTH1.Integral(0, myTH1.GetNbinsX() + 1)
+
+    for i in xrange(0, myTH1.GetNbinsX()+1):
+        discrV.append(myTH1.GetBinLowEdge(myTH1.GetNbinsX() - i))
+        integral -= myTH1.GetBinContent(myTH1.GetNbinsX() - i)
+        effV.append(integral/totintegral)
+
+    # We may want the max. efficiency to be correctly normalised,
+    # if the TH1 passed as argument doesn't cover the whole range.
+    if total is not 0:
+        if total < integral:
+            print "Warning in createEffVsCutCurve: total number specified to be *smaller* than the histograms's integral. Something might be wrong."
+        integral = total
+    #if integral != 0 :
+    #    effV = [ x/integral for x in effV ]
+    #print len(discrV), discrV, effV
+    return ROOT.TGraph(len(discrV), np.array(discrV), np.array(effV))
+
+
+
 def drawFigMeritVsCutCurve(bkgTH1, sigTH1, total = 0): # Not implemented
     """ Create and return 2 x (sqrt(S+B)-sqrt(B)) vs. cut TGraph, from two one-dimensional histograms. """
 
